@@ -1,22 +1,36 @@
 import requests
 import datetime
 
-# latest = 'https://api.fixer.io/latest?base=USD'
+storeFileName = "raw_base_usd.csv"
+first_avaliable_day = datetime.date(1999, 1, 4)
+today = datetime.date.today()
+diff = today - first_avaliable_day
 
-# json = requests.get(latest).json()
-
-
-# date = datetime.date(1999, 1, 1)
-# print(date.strftime("%Y-%m-%d"))
 
 def forexOn(date):
    url = "https://api.fixer.io/" + date + "?base=USD"
    return requests.get(url).json()
 
+def toCSVline(data):
+   line = ""
+   for key, value in data.items():
+      line += str(value)
+      if (key != "ZAR"): # last one
+         line += ","
+      else:
+         line +="\n"
+   return line
 
-for i in range(1,35):
-   date = datetime.date(1998, 12, 31) + datetime.timedelta(days=i)
+file = open(storeFileName,"w") 
+
+file.write("Date,AUD,CAD,CHF,CYP,CZK,DKK,EEK,EUR,GBP,HKD,HUF,ISK,JPY,KRW,LTL,LVL,MTL,NOK,NZD,PLN,ROL,SEK,SGD,SIT,SKK,TRL,ZAR\n")
+
+for i in range(0, diff.days):
+   date = first_avaliable_day + datetime.timedelta(days=i)
    # Monday is 0 and Sunday is 6
    if (date.weekday() < 5):
-      print(date.strftime("%Y-%m-%d"), date.weekday())
-      print(forexOn(date.strftime("%Y-%m-%d")))
+      print(i+1,"/",diff.days, "days")
+      file.write(date.strftime("%Y-%m-%d")+","+toCSVline(forexOn(date.strftime("%Y-%m-%d"))['rates']))
+
+file.close() 
+print(storeFileName, "written")
