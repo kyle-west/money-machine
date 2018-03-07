@@ -30,7 +30,17 @@ for i in range(0, diff.days):
    # Monday is 0 and Sunday is 6
    if (date.weekday() < 5):
       print(i+1,"/",diff.days, "days")
-      file.write(date.strftime("%Y-%m-%d")+","+toCSVline(forexOn(date.strftime("%Y-%m-%d"))['rates']))
+      d_str = date.strftime("%Y-%m-%d")
+
+      try:
+         res = forexOn(d_str)
+      except: #try again
+         print ("HIT EXCEPTION:", res)
+         res = forexOn(d_str)
+
+      file.write(d_str+","+toCSVline(res['rates']))
+         
+
 
 file.close() 
 print(storeFileName, "written")
