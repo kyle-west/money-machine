@@ -1,3 +1,11 @@
+########################################################################
+# 
+# This file contains functions that query a dataset for information, 
+# and/or run a function against that dataset for specific dates.
+#
+########################################################################
+
+
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -27,10 +35,14 @@ def row_circa(date, series, date_col_name = 'Date'):
 ########################################################################
 # Returns a data row for "this time last year" in the fiscal year
 ########################################################################
-def YTD(date, series):
+def YTD(date, series, target_col = None):
    day = getDate(date)
    last_year = day - relativedelta(years=1)
-   return row_circa(last_year, series)
+   row = row_circa(last_year, series)
+   if target_col:
+      if row is not None: return row[target_col].tolist()[0]
+      else: return None
+   else: return row
 
 
 
@@ -54,5 +66,5 @@ if __name__ == "__main__":
    print("----------------------------------------------------")
    print("TEST YTD")
    print("\n2000-01-05", YTD("2000-01-05", CAD), sep="\n")
-   print("\n2000-01-09", YTD("2000-01-09", CAD), sep="\n")
-   print("\n1999-01-09", YTD("1999-01-09", CAD), sep="\n")
+   print("\n2000-01-09", YTD("2000-01-09", CAD, target_col = "CAD"), sep="\n")
+   print("\n1999-01-09", YTD("1999-01-09", CAD, target_col = "CAD"), sep="\n")

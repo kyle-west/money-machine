@@ -1,6 +1,11 @@
 ########################################################################
-# 
+#
+# This script makes over 7,000 requests to Fixer, sorts the response data
+# and stores that info in a CSV file.
+#
 ########################################################################
+
+
 import requests
 import datetime
 
@@ -66,7 +71,9 @@ for i in day_range:
          buffer[key][i] = res['rates'][key] 
       
 
+########################################################################
 # write the buffer to our file
+########################################################################
 file = open(storeFileName,"w")
 file.write(toCSV(buffer))
 file.close()
