@@ -6,11 +6,9 @@ import datetime
 
 storeFileName = "raw_base_usd.csv"
 first_avaliable_day = datetime.date(1999, 1, 4)
-# first_avaliable_day = datetime.date(2000,7, 17)
 today = datetime.date.today()
 diff = today - first_avaliable_day
 day_range = range(0, diff.days)
-# day_range = range(0, 10)
 
 ########################################################################
 # fetch data from our endpoint
@@ -71,5 +69,5 @@ for i in day_range:
 # write the buffer to our file
 file = open(storeFileName,"w")
 file.write(toCSV(buffer))
-file.close() 
+file.close()
 print(storeFileName, "written")
