@@ -21,11 +21,11 @@ def getDate(date):
 ########################################################################
 # Returns a data row closest to a given date in the fiscal year
 ########################################################################
-def row_circa(date, series, date_col_name = 'Date'):
+def row_circa(date, df, date_col_name = 'Date'):
    day = getDate(date)
-   first_availiable = getDate(series[date_col_name][0]) # assume sorted
+   first_availiable = getDate(df[date_col_name][0]) # assume sorted
    while True: # no do-whiles in python :(
-      row = series[series[date_col_name] == day.strftime("%Y-%m-%d")]
+      row = df[df[date_col_name] == day.strftime("%Y-%m-%d")]
       if not row.empty:
          return row
       day = day - datetime.timedelta(days=1)
@@ -35,10 +35,10 @@ def row_circa(date, series, date_col_name = 'Date'):
 ########################################################################
 # Returns a data row for "this time last year" in the fiscal year
 ########################################################################
-def YTD(date, series, target_col = None):
+def YTD(date, df, target_col = None):
    day = getDate(date)
    last_year = day - relativedelta(years=1)
-   row = row_circa(last_year, series)
+   row = row_circa(last_year, df)
    if target_col:
       if row is not None: return row[target_col].tolist()[0]
       else: return None
