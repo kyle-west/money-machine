@@ -28,7 +28,7 @@ def calcError(actual, predictions):
    diff = 0
    for act, pred in zip(actual, predictions):
       diff += act - pred
-   return diff / len(actual)
+   return abs(diff / len(actual))
 
 def findSmallestErrorInRecords(records):
    smallest = math.inf
@@ -49,10 +49,10 @@ TRAINING_SLICE = slice(0,-(TEST_SIZE + 1))
 TEST_SLICE = slice(-(TEST_SIZE + 1), -1)
 
 records = []
-numTrys = 2
+numTrys = 3
 
-for layer_size in range(30, 81, 10):
-   for iteration_size in range(1000, 100001, 1000):
+for layer_size in range(80, 141, 5):
+   for iteration_size in [1000, 10000, 100000, 1000000]: # range(1000, 100001, 1000):
       error = 0.0
       for trial in range(0, numTrys):
          NN = MLPRegressor(
