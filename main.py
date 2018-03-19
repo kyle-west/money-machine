@@ -30,9 +30,9 @@ print(data.head())
 print("BEGIN TRAINING")
 
 NN = MLPRegressor(
-   hidden_layer_sizes=(50,),  activation='logistic', solver='adam', 
+   hidden_layer_sizes=(130,),  activation='logistic', solver='adam', 
    alpha=0.001, batch_size='auto', learning_rate='constant', 
-   learning_rate_init=0.01, max_iter=10000, shuffle=False,
+   learning_rate_init=0.01, max_iter=1000, shuffle=False,
    random_state=None, warm_start=False, momentum=0.9
 )
 
