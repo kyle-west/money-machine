@@ -40,9 +40,9 @@ class TransactionManager:
       if debug: self.report()
 
       if initialInvestment:
-         half = self.totalFunds // 2 
-         portionSize = half // len(initialInvestment)
-         self.invest(initialInvestment, portionSize)
+         half = (self.totalFunds * initialInvestment[1]) // 1 
+         portionSize = half // len(initialInvestment[0])
+         self.invest(initialInvestment[0], portionSize)
 
    #====================================================================
    # Make a flat-rate investment in a series of stocks
@@ -204,7 +204,7 @@ if __name__ == "__main__":
       "SGD": 2.06, "ZAR": 3.25
    }
 
-   manager = TransactionManager(initialInvestment=actual_day_one, debug=True)
+   manager = TransactionManager(initialInvestment=(actual_day_one, .75), debug=True)
    manager.report()
    
    print("-----------------------------------------------")
