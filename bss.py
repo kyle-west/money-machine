@@ -34,5 +34,5 @@ class BSS:
             pred = self.predicted_data[i]
             diff = ((pred - curr)/float(curr))
             mag, decision = self.applyRuleset(diff)
-            self.predicitons.append([self.ids[i],pred,mag,decision])
+            self.predictions.append((self.ids[i],pred,mag,decision))
         return self.predictions
