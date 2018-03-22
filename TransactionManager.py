@@ -7,6 +7,7 @@
 #
 ########################################################################
 
+import matplotlib.pyplot as plt
 
 
 ########################################################################
@@ -25,31 +26,34 @@ _BSS_ = 3
 ########################################################################
 class TransactionManager:
    #====================================================================
-   # 
+   # Constructor, initializes parameter values
    #====================================================================
    def __init__(self):
-      self.total_funds = 100000.0
+      self.totalFunds = 100000.0
       self.purchaseCap = 250.0
       self.currentShares = {}
+      self.history = []
 
 
    #====================================================================
-   # 
+   # Given a list of BSS Transaction, Buy and Sell as indicated
    #====================================================================
-   def makeTransactions(self, currency_prediction_list, current_values):
-      buy_list =  [x for x in currency_prediction_list if x[_BSS_] == "BUY"]
-      sell_list = [x for x in currency_prediction_list if x[_BSS_] == "SELL"]
-      stay_list = [x for x in currency_prediction_list if x[_BSS_] == "STAY"]
+   def makeTransactions(self, currencyPredictionList, currentValues):
+      buy_list =  [x for x in currencyPredictionList if x[_BSS_] == "BUY"]
+      sell_list = [x for x in currencyPredictionList if x[_BSS_] == "SELL"]
+      stay_list = [x for x in currencyPredictionList if x[_BSS_] == "STAY"]
       
-      for currency in sell_list: self.sell(currency, current_values)
-      for currency in buy_list:  self.buy(currency,  current_values)
+      self.history.append(self.totalFunds)
+      
+      for currency in sell_list: self.sell(currency, currentValues)
+      for currency in buy_list:  self.buy(currency,  currentValues)
 
 
    #====================================================================
-   # TODO: refine unit share calculation formula
+   # Calculates the number of shares to buy based on allocated funds
    #====================================================================
-   def buy(self, currency, current_values):
-      shares = abs(currency[_MAG_] * (self.total_funds / self.purchaseCap))
+   def buy(self, currency, currentValues):
+      shares = abs(currency[_MAG_] * (self.totalFunds / self.purchaseCap))
       shares = shares // currency[_VAL_]
       shares = min(shares, self.purchaseCap)
       print("Buying {} units of {}".format(shares, currency[_CUR_]))
@@ -59,39 +63,52 @@ class TransactionManager:
       else:
          self.currentShares[currency[_CUR_]] = shares
       
-      self.total_funds -= shares * current_values[currency[_CUR_]]
+      self.totalFunds -= shares * currentValues[currency[_CUR_]]
 
 
    #====================================================================
-   # 
+   # Sells a given percentage of shares for a certain currency
    #====================================================================
-   def sell(self, currency, current_values):
+   def sell(self, currency, currentValues):
       if currency[_CUR_] in self.currentShares:
          shares = (currency[_MAG_] * self.currentShares[currency[_CUR_]])//1
          self.currentShares[currency[_CUR_]] -= shares
-         self.total_funds += shares * current_values[currency[_CUR_]]
+         self.totalFunds += shares * currentValues[currency[_CUR_]]
    
    #====================================================================
-   # 
+   # Sell everything share we own at the current values
    #====================================================================
-   def sellAll(self, current_values):
+   def sellAll(self, currentValues):
+      self.history.append(self.totalFunds)
       for cur in self.currentShares:
-         self.sell((cur, None, 1, None), current_values)
+         self.sell((cur, None, 1, None), currentValues)
+      self.history.append(self.totalFunds)
 
 
    #====================================================================
-   # 
+   # Print a simple report to the screen of what we own
    #====================================================================
    def report(self):
-      print("TOTAL FUNDS:", self.total_funds, sep = "\n")
+      print("TOTAL FUNDS:", self.totalFunds, sep = "\n")
       print("SHARES HELD:", self.currentShares, sep = "\n")
+
+   #====================================================================
+   # Show a plot to report the changing values of the system
+   #====================================================================
+   def plotFundHistory(self):
+      print("GENERATING PLOT...")
+      plt.plot(range(0,len(self.history)), self.history)
+      plt.ylabel('$ Value in USD')
+      plt.xlabel('Transaction Number')
+      plt.show()
 
 ########################################################################
 # Test out our class
 ########################################################################
 if __name__ == "__main__":
 
-   mock_inputs = [
+   # init all our test values 
+   mock_inputs_d1 = [
       ("AUD", 6.40, 0.25, "BUY"),
       ("CAD", 1.35, -.53, "SELL"),
       ("CHF", 12.40, 0.78, "STAY"),
@@ -111,54 +128,32 @@ if __name__ == "__main__":
       ("ZAR", 3.56, -.26, "SELL")
    ]
    
-   today = {
-      "AUD": 6.41,
-      "CAD": 1.25,
-      "CHF": 12.45,
-      "CZK": 3.42,
-      "DKK": 5.78,
-      "EUR": 122.08,
-      "GBP": 45.27,
-      "HKD": 20.32,
-      "HUF": 8.91,
-      "JPY": 3.25,
-      "KRW": 0.13,
-      "NOK": 0.84,
-      "NZD": 0.45,
-      "PLN": 0.53,
-      "SEK": 1.85,
-      "SGD": 2.08,
-      "ZAR": 3.23
+   # today's inputs (same as given to NNN)
+   day_one = {
+      "AUD": 6.41, "CAD": 1.25, "CHF": 12.45, "CZK": 3.42, "DKK": 5.78, 
+      "EUR": 122.08, "GBP": 45.27, "HKD": 20.32, "HUF": 8.91, "JPY": 3.25, 
+      "KRW": 0.13, "NOK": 0.84, "NZD": 0.45, "PLN": 0.53, "SEK": 1.85, 
+      "SGD": 2.08, "ZAR": 3.23
    }
 
-   tomorrow = {
-      "AUD": 6.35,
-      "CAD": 1.16,
-      "CHF": 12.75,
-      "CZK": 3.43,
-      "DKK": 5.68,
-      "EUR": 122.12,
-      "GBP": 45.10,
-      "HKD": 20.32,
-      "HUF": 8.92,
-      "JPY": 3.26,
-      "KRW": 0.15,
-      "NOK": 0.85,
-      "NZD": 0.42,
-      "PLN": 0.51,
-      "SEK": 1.87,
-      "SGD": 2.08,
-      "ZAR": 3.23
+   # the actual values 
+   day_two = {
+      "AUD": 6.35, "CAD": 1.16, "CHF": 12.75, "CZK": 3.43, "DKK": 5.68, 
+      "EUR": 122.12, "GBP": 45.10, "HKD": 20.32, "HUF": 8.92, "JPY": 3.26, 
+      "KRW": 0.15, "NOK": 0.85, "NZD": 0.42, "PLN": 0.51, "SEK": 1.87, 
+      "SGD": 2.08, "ZAR": 3.23
    }
 
    # print("MOCK INPUTS:", mock_inputs, sep="\n")
    print("-----------------------------------------------")
    
    manager = TransactionManager()
-   manager.makeTransactions(mock_inputs, today)
+   manager.makeTransactions(mock_inputs_d1, day_one)
    print("-----------------------------------------------")
    manager.report()
 
    print("-----------------------------------------------")
-   manager.sellAll(tomorrow)
+   manager.sellAll(day_two)
    manager.report()
+
+   manager.plotFundHistory()
