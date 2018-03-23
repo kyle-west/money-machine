@@ -1,9 +1,5 @@
 import pandas as pd
 import numpy as np
-#from sklearn.neural_network import MLPRegressor
-#from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-
 
 class DataWrangler:
 	def __init__(self, filePath, windowSize, trainRatio):
@@ -51,28 +47,3 @@ class DataWrangler:
 
 	def getWindowSize(self):
 		return self.windowSize
-
-
-def main():
-	wrangler = DataWrangler(filePath="data/raw_base_usd.csv", windowSize=14, trainRatio=0.7)
-
-	X_train, X_test, y_train, y_test = wrangler.getSplitData()
-
-	#NN = MLPRegressor(
-    #        hidden_layer_sizes=(130,),  activation='logistic', solver='adam', 
-    #        alpha=0.001, batch_size='auto', learning_rate='constant', 
-    #        learning_rate_init=0.01, max_iter=10000, shuffle=False,
-    #        random_state=None, warm_start=False, momentum=0.9
-    #     )
-	clf = RandomForestRegressor()
-	model = clf.fit(X_train, y_train)
-	predicted = model.predict(X_test)
-
-	np.set_printoptions(suppress=True) 
-	print("--Predicted--")
-	print(predicted[0])
-	print("--Actual--")
-	print(y_test[0])
-
-if __name__ == "__main__":
-	main()
