@@ -139,85 +139,49 @@ class TransactionManager:
 ########################################################################
 if __name__ == "__main__":
 
-   # init all our test values 
-   BSS_d1 = [
-      ("AUD", 6.40, 0.25, "BUY"),
-      ("CAD", 1.35, -.53, "SELL"),
-      ("CHF", 12.40, 0.78, "STAY"),
-      ("CZK", 3.45, -.32, "BUY"),
-      ("DKK", 5.62, 0.43, "BUY"),
-      ("EUR", 122.01, -.11, "STAY"),
-      ("GBP", 45.21, 0.03, "STAY"),
-      ("HKD", 20.30, 0.02, "STAY"),
-      ("HUF", 8.97, -.09, "BUY"),
-      ("JPY", 3.21, 1.00, "BUY"),
-      ("KRW", 0.12, -.50, "SELL"),
-      ("NOK", 0.78, 0.52, "BUY"),
-      ("NZD", 0.46, -.26, "BUY"),
-      ("PLN", 0.75, 0.78, "SELL"),
-      ("SEK", 1.75, 0.45, "SELL"),
-      ("SGD", 2.02, 0.78, "STAY"),
-      ("ZAR", 3.56, -.26, "SELL")
-   ]
+   from mock.MockNN import MockNN
+   from BuySellStay import BuySellStay
+   import pandas
 
-   BSS_d2 = [
-      ("AUD", 6.40, 0.25, "STAY"),
-      ("CAD", 1.35, -.53, "STAY"),
-      ("CHF", 12.42, 0.78, "BUY"),
-      ("CZK", 3.45, -.32, "STAY"),
-      ("DKK", 5.62, 0.43, "STAY"),
-      ("EUR", 119.60, -.25, "SELL"),
-      ("GBP", 44.75, 0.25, "SELL"),
-      ("HKD", 20.45, 0.02, "BUY"),
-      ("HUF", 8.97, -.09, "STAY"),
-      ("JPY", 3.21, 1.00, "STAY"),
-      ("KRW", 0.12, -.50, "STAY"),
-      ("NOK", 0.78, 0.52, "STAY"),
-      ("NZD", 0.46, -.26, "STAY"),
-      ("PLN", 0.75, 0.78, "STAY"),
-      ("SEK", 1.75, 0.45, "STAY"),
-      ("SGD", 2.14, 0.78, "SELL"),
-      ("ZAR", 3.56, -.26, "STAY")
-   ]
+   print("LOADING DATASET")
+   # read in file data opt in which curencies we care about
+   data = pandas.read_csv('data/raw_base_usd.csv', header=0)
+   data = data[[
+      "AUD","CAD","CHF","CZK","DKK",
+      "EUR","GBP","HKD","HUF","JPY",
+      "KRW","NOK","NZD","PLN","SEK",
+      "SGD","ZAR"
+   ]]
+   print(data.head())
+   print("-----------------------------------------------")
+
+   NN = MockNN(debug=True)
+   NN.fit(data)
+   print("-----------------------------------------------")
+
+   i, num_rows = 4500, 500
+   testRows = data[i:(i+num_rows+1)]
+
+   for i in range(i, (i+num_rows+1)):
+      row = data[i:(i+1)]
+      prediction = NN.predict(row)
+      bss = BuySellStay(row, prediction)
+
+
+   # manager = TransactionManager(initialInvestment=(actual_day_one, .75), debug=True)
+   # manager.report()
    
-   # today's inputs (same as given to NNN)
-   actual_day_one = {
-      "AUD": 6.41, "CAD": 1.25, "CHF": 12.45, "CZK": 3.42, "DKK": 5.78, 
-      "EUR": 122.08, "GBP": 45.27, "HKD": 20.32, "HUF": 8.91, "JPY": 3.25, 
-      "KRW": 0.13, "NOK": 0.84, "NZD": 0.45, "PLN": 0.53, "SEK": 1.85, 
-      "SGD": 2.08, "ZAR": 3.23
-   }
+   # print("-----------------------------------------------")
+   # manager.makeTransactions(BSS_d1, actual_day_one)
+   # manager.report()
 
-   # the actual values of Day 1
-   actual_day_two = {
-      "AUD": 6.35, "CAD": 1.16, "CHF": 12.75, "CZK": 3.43, "DKK": 5.68, 
-      "EUR": 122.12, "GBP": 45.10, "HKD": 20.32, "HUF": 8.92, "JPY": 3.26, 
-      "KRW": 0.15, "NOK": 0.85, "NZD": 0.42, "PLN": 0.51, "SEK": 1.87, 
-      "SGD": 2.08, "ZAR": 3.23
-   }
+   # print("-----------------------------------------------")
+   # manager.makeTransactions(BSS_d2, actual_day_two)
+   # manager.report()
 
-   # the actual values of Day 2
-   actual_day_three = {
-      "AUD": 6.36, "CAD": 1.27, "CHF": 12.60, "CZK": 3.45, "DKK": 5.69, 
-      "EUR": 122.53, "GBP": 45.25, "HKD": 20.14, "HUF": 8.75, "JPY": 3.25, 
-      "KRW": 0.17, "NOK": 0.83, "NZD": 0.75, "PLN": 0.53, "SEK": 1.93, 
-      "SGD": 2.06, "ZAR": 3.25
-   }
+   # print("-----------------------------------------------")
+   # manager.sellAll(actual_day_three)
+   # manager.report()
 
-   manager = TransactionManager(initialInvestment=(actual_day_one, .75), debug=True)
-   manager.report()
-   
-   print("-----------------------------------------------")
-   manager.makeTransactions(BSS_d1, actual_day_one)
-   manager.report()
-
-   print("-----------------------------------------------")
-   manager.makeTransactions(BSS_d2, actual_day_two)
-   manager.report()
-
-   print("-----------------------------------------------")
-   manager.sellAll(actual_day_three)
-   manager.report()
-
-   print("-----------------------------------------------")
-   manager.plotFundHistory()
+   # print("-----------------------------------------------")
+   # manager.plotFundHistory()
