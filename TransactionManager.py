@@ -106,22 +106,24 @@ class TransactionManager:
    # Print a simple report to the screen of what we own
    #====================================================================
    def report(self):
-      print("TOTAL FUNDS:", self.totalFunds, sep = "\n")
+      print("TOTAL FUNDS:", self.totalFunds, sep = "\t")
+      print("TOTAL PROFIT:", self.totalFunds - self.history[0], sep = "\t")
       print("SHARES HELD:", self.currentShares, "", sep = "\n")
 
    #====================================================================
    # Show a plot to report the changing values of the system
    #====================================================================
-   def plotFundHistory(self):
+   def plotFundHistory(self, showEachTransaction=False):
       print("GENERATING PLOT...")
       plt.plot(range(0,len(self.history)), self.history)
-      plt.plot(range(0,len(self.history)), self.history, 'ro')
+      if showEachTransaction:
+         plt.plot(range(0,len(self.history)), self.history, 'ro')
       plt.ylabel('$ Value in USD')
       plt.xlabel('Transaction Number')
       plt.show()
 
    #====================================================================
-   # Push the current financial histort if recording
+   # Push the current financial history if recording
    # {quiet} - (-1|1) pause recording with -1, start again with 1
    #====================================================================
    def recordState(self, quiet = 0):
@@ -141,7 +143,10 @@ if __name__ == "__main__":
 
    from mock.MockNN import MockNN
    from BuySellStay import BuySellStay
+   from Format      import Format
    import pandas
+
+   F = Format()
 
    print("LOADING DATASET")
    # read in file data opt in which curencies we care about
@@ -153,35 +158,29 @@ if __name__ == "__main__":
       "SGD","ZAR"
    ]]
    print(data.head())
-   print("-----------------------------------------------")
 
+   print("-----------------------------------------------")
    NN = MockNN(debug=True)
    NN.fit(data)
-   print("-----------------------------------------------")
 
+   print("-----------------------------------------------")
    i, num_rows = 4500, 500
    testRows = data[i:(i+num_rows+1)]
+   day0 = F.DataFrameRow_to_Dictionary(data[(i-1):i])
+   lastDay = F.DataFrameRow_to_Dictionary(data[(i+num_rows+1):(i+num_rows+2)])
+   
+   manager = TransactionManager(initialInvestment=(day0, 0.40))
+   bss = BuySellStay()
+   
+   print("TRADING")
 
    for i in range(i, (i+num_rows+1)):
       row = data[i:(i+1)]
-      prediction = NN.predict(row)
-      bss = BuySellStay(row, prediction)
+      prediction = F.DataFrameRow_to_Dictionary(NN.predict(row))
+      row = F.DataFrameRow_to_Dictionary(row)
+      actions = bss.getActions(row, prediction)
+      manager.makeTransactions(actions, row)
 
-
-   # manager = TransactionManager(initialInvestment=(actual_day_one, .75), debug=True)
-   # manager.report()
-   
-   # print("-----------------------------------------------")
-   # manager.makeTransactions(BSS_d1, actual_day_one)
-   # manager.report()
-
-   # print("-----------------------------------------------")
-   # manager.makeTransactions(BSS_d2, actual_day_two)
-   # manager.report()
-
-   # print("-----------------------------------------------")
-   # manager.sellAll(actual_day_three)
-   # manager.report()
-
-   # print("-----------------------------------------------")
-   # manager.plotFundHistory()
+   manager.sellAll(lastDay)
+   manager.report()
+   manager.plotFundHistory()

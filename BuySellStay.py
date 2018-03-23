@@ -1,38 +1,52 @@
-class BuySellStay:
-    def __init__(self, current_data, predicted_data):
-        self.current_data   = current_data
-        self.predicted_data = predicted_data
-        self.predictions = []
-        self.ids = ['AUD', 'BGN', 'BRL', 'CAD', 'CHF', 'CNY'
-                   ,'CYP', 'CZK', 'DKK' ,'EEK', 'EUR', 'GBP'
-                   ,'HKD', 'HRK', 'HUF' ,'IDR', 'ILS', 'INR'
-                   ,'ISK', 'JPY', 'KRW' ,'LTL', 'LVL', 'MTL'
-                   ,'MXN', 'MYR', 'NOK' ,'NZD', 'PHP', 'PLN'
-                   ,'ROL', 'RON', 'RUB' ,'SEK', 'SGD', 'SIT'
-                   ,'SKK', 'THB', 'TRL' ,'TRY', 'ZAR']
+########################################################################
+#
+# Buy Sell Stay
+#
+# Takes a row of current FOREX values, and a row of predicted values.
+# Calculates a mamgitude and computes a trade action. Returns a tupple 
+# including relevant data in the following form:
+#     (CURRENCY, PREDICTED_VALUE, MAGNITUDE, BUY_SELL_STAY) 
+#
+########################################################################
 
-    def applyRuleset(self,diff):
+from numpy import e
+sigmoid = lambda x: 1.0 / (1.0 + e**(-x))
+
+class BuySellStay:
+    #===================================================================
+    # We don't need to provide a constructor
+    #===================================================================
+    def __init__(self): pass
+    
+    #===================================================================
+    # Helper function to compute the magnitude and action
+    #===================================================================
+    def applyRuleset(self, diff):
         magnitude = 0
         influence = 1
         decision = 'STAY'
-        if diff < 0:
+        if diff < 0.0:
             influence = -1
-        if abs(diff) > .05:
-            magnitude += .25
+        if abs(diff) > .001:
+            magnitude += sigmoid(diff)
             if diff < 0:
                 decision = 'SELL'
             else:
                 decision = 'BUY'
-        if abs(diff) > .1:
-            magnitude += .25
+        if abs(diff) > .01:
+            magnitude += sigmoid(diff) * .25
 
         return (magnitude * influence), decision
 
-    def decide(self):
-        for i in range(len(self.predicted_data)):
-            curr = self.current_data[i]
-            pred = self.predicted_data[i]
+    #===================================================================
+    # Returns a list of actions given predictions and current values
+    #===================================================================
+    def getActions(self, current_data, predicted_data):
+        predictions = []
+        for name in current_data.keys():
+            curr = current_data[name]
+            pred = predicted_data[name]
             diff = ((pred - curr)/float(curr))
             mag, decision = self.applyRuleset(diff)
-            self.predictions.append((self.ids[i],pred,mag,decision))
-        return self.predictions
+            predictions.append((name, pred, mag, decision))
+        return predictions
