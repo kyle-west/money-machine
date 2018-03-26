@@ -16,9 +16,8 @@ class BuySellStay:
     #===================================================================
     # We don't need to provide a constructor
     #===================================================================
-    def __init__(self, aggressiveness = 1.0 ,always = None):
+    def __init__(self, aggressiveness = 1.0):
        self.aggressiveness = aggressiveness # how much to buy when we buy
-       self.always = always # always perform certain action
     
     #===================================================================
     # Helper function to compute the magnitude and action
@@ -50,9 +49,6 @@ class BuySellStay:
             curr = current_data[name]
             pred = predicted_data[name]
             diff = ((pred - curr)/float(curr))
-            if self.always:
-               mag, decision = .1, self.always
-            else:
-               mag, decision = self.applyRuleset(diff)
+            mag, decision = self.applyRuleset(diff)
             predictions.append((name, pred, mag, decision))
         return predictions
