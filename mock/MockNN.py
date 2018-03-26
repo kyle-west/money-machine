@@ -1,7 +1,7 @@
 class MockNN:
    def __init__(self, debug=False):
       self.debug = debug
-      print("WARINING: Mock Neural Network Being Used")
+      print("WARNING: Mock Neural Network Being Used")
    
    def fit(self, data):
       self.predictions = data.shift(-1)

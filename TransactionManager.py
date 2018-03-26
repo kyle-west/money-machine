@@ -87,7 +87,9 @@ class TransactionManager:
    #====================================================================
    def sell(self, currency, currentValues):
       if currency[_CUR_] in self.currentShares:
-         shares = abs((currency[_MAG_] * self.currentShares[currency[_CUR_]])//1)
+         # ensure we don't sell more shares than owned
+         mag = min(currency[_MAG_], 1.0)
+         shares = abs((mag * self.currentShares[currency[_CUR_]])//1)
          if self.debug: print("Selling {} units of {}".format(shares, currency[_CUR_]))
          self.currentShares[currency[_CUR_]] -= shares
          self.totalFunds += shares * currentValues[currency[_CUR_]]
@@ -106,9 +108,12 @@ class TransactionManager:
    # Print a simple report to the screen of what we own
    #====================================================================
    def report(self):
-      print("TOTAL FUNDS:", self.totalFunds, sep = "\t")
-      print("TOTAL PROFIT:", self.totalFunds - self.history[0], sep = "\t")
-      print("SHARES HELD:", self.currentShares, "", sep = "\n")
+      money = lambda x: "$ {: >10}".format("{:.2f}".format(x))
+      print("CURRENT FUNDS:", money(self.totalFunds), sep = "\t")
+      print("TOTAL PROFIT:", money(self.totalFunds - self.history[0]), sep = "\t")
+      print("MAX FUNDS:", money(max(self.history)), sep = "\t")
+      print("MIN FUNDS:", money(min(self.history)), sep = "\t")
+      print("CURRENT SHARES HELD:", self.currentShares, "", sep = "\n")
 
    #====================================================================
    # Show a plot to report the changing values of the system
@@ -131,6 +136,10 @@ class TransactionManager:
          self.recording = (quiet > 0)
       if self.recording:
          self.history.append(self.totalFunds)
+
+      if (self.totalFunds <= 0.01): 
+         print ("!!!!! GAME LOST, FUNDS DEPLETED. !!!!!")
+         self.plotFundHistory()
 
 
 
@@ -170,7 +179,7 @@ if __name__ == "__main__":
    lastDay = F.DataFrameRow_to_Dictionary(data[(i+num_rows+1):(i+num_rows+2)])
    
    manager = TransactionManager(initialInvestment=(day0, 0.40))
-   bss = BuySellStay()
+   bss = BuySellStay(aggressiveness = 300.0)
    
    print("TRADING")
 
