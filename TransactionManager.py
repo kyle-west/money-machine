@@ -181,7 +181,7 @@ if __name__ == "__main__":
    lastDay = F.DataFrameRow_to_Dictionary(data[(i+num_rows+1):(i+num_rows+2)])
    
    manager = TransactionManager(initialInvestment=(day0, 0.40))
-   bss = BuySellStay(aggressiveness = 1000.0)
+   bss = BuySellStay(aggressiveness = 300.0)
    
    print("TRADING")
 
