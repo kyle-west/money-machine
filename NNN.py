@@ -1,6 +1,9 @@
 from DataWrangler import DataWrangler
 from sklearn.ensemble import BaggingRegressor
 from sklearn.neural_network import MLPRegressor
+import os.path
+from sklearn.externals import joblib
+
 
 class NNN:
 	def __init__(self, wrangler):
@@ -32,11 +35,12 @@ class NNN:
 			predicted.append(model.predict(lastWindowData)[0])
 		return predicted
 
-	def saveNNN(self):
-		pass
+	def saveNNN(self, model):
+		if not os.path.exists("NN.pkl"):
+                joblib.dump(model, "NN.pkl")
 
-	def loadNNN(self):
-		pass
+	def loadNNN(self, model):
+            model = joblib.load("NN.pkl")
 
 if __name__ == "__main__":
 	debug = False
