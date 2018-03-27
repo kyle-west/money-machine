@@ -1,14 +1,18 @@
 import pandas as pd
 import numpy as np
+import os.path
 
 class DataWrangler:
-	def __init__(self, filePath, windowSize, debug=False):
+	def __init__(self, windowSize, debug=False):
 		self.windowSize = windowSize
 		self.currencyList = ["AUD","CAD","CHF","CZK","DKK","EUR","GBP","HKD","HUF","JPY","KRW","NOK","NZD","PLN","SEK","SGD","ZAR"]
-		self.setup(filePath, debug)
+		self.setup(debug)
 
-	def setup(self, filePath, debug):
-		self.originalData = pd.read_csv(filePath, header=0)
+	def setup(self, debug):
+		if os.path.exists("data/currentData.csv"):
+			self.originalData = pd.read_csv("data/currentData.csv", header=0)
+		else:
+			self.originalData = pd.read_csv("data/raw_base_usd.csv", header=0)
 		self.originalData = self.originalData[self.currencyList]
 		if debug:
 			self.originalData = pd.DataFrame([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]])
@@ -34,6 +38,10 @@ class DataWrangler:
 
 	def addDailyData(self, dailyData):
 		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData)), ignore_index=True)
+		self.saveOriginalData()
+
+	def saveOriginalData(self):
+		self.originalData.to_csv("data/currentData.csv", index=False)
 
 	def getLastWindowSizedData(self):
 		return np.atleast_2d(np.ravel(self.originalData.tail(self.windowSize)))
@@ -60,7 +68,15 @@ class DataWrangler:
 		return self.currencyList
 
 if __name__ == "__main__":
-	wrangler = DataWrangler("data/raw_base_usd.csv", 2, True)
+	wrangler = DataWrangler(2, False)
+	print(wrangler.getOriginalData().head())
+	wrangler.saveOriginalData()
+
+	wrangler2 = DataWrangler(2, False)
+	print(wrangler2.getOriginalData().head())
+
+
+'''
 	X_train, X_test, y_train_list, y_test_list = wrangler.getFormattedDataSplit(0.7)
 
 	print("Original Data")
@@ -81,4 +97,4 @@ if __name__ == "__main__":
 		print(y_test_list[i])
 
 	print("LastWindowSizedData")
-	print(wrangler.getLastWindowSizedData())
+	print(wrangler.getLastWindowSizedData())'''
