@@ -7,44 +7,27 @@
 ########################################################################
 # load libraries and data
 ########################################################################
-from sklearn.neural_network import MLPRegressor
-import pandas
-import output
+from DataWrangler import DataWrangler
+from Format import Format
+from TransactionManager import TransactionManager
+from BuySellStay import BuySellStay
 
-print("LOADING DATASET")
-data = pandas.read_csv('./data/raw_base_usd.csv', header=0)
+wrangler = DataWrangler(windowSize=14)
+nnn = NNN(wrangler)
+nnn.train(0.7)
+testData = wrangler.loadTestData()
+manager = TransactionManager(initialInvestment=(day0, 0.40))
+bss = BuySellStay(aggressiveness = 300.0)
 
-# opt in which curencies we care about
-data = data[[
-   "AUD","CAD","CHF","CZK","DKK",
-   "EUR","GBP","HKD","HUF","JPY",
-   "KRW","NOK","NZD","PLN","SEK",
-   "SGD","ZAR"
-]] 
-print(data.head())
+print("TRADING")
 
+for i in range(i, (i+num_rows+1)):
+	row = data[i:(i+1)]
+	prediction = F.DataFrameRow_to_Dictionary(NN.predict(row))
+	row = F.DataFrameRow_to_Dictionary(row)
+	actions = bss.getActions(row, prediction)
+	manager.makeTransactions(actions, row)
 
-########################################################################
-# Train on our dataset
-########################################################################
-print("BEGIN TRAINING")
-
-NN = MLPRegressor(
-   hidden_layer_sizes=(130,),  activation='logistic', solver='adam', 
-   alpha=0.001, batch_size='auto', learning_rate='constant', 
-   learning_rate_init=0.01, max_iter=1000, shuffle=False,
-   random_state=None, warm_start=False, momentum=0.9
-)
-
-TEST_SIZE = 1
-TRAINING_SLICE = slice(0,-(TEST_SIZE + 1))
-TEST_SLICE = slice(-(TEST_SIZE + 1), -1)
-
-model = NN.fit(data[TRAINING_SLICE], data.shift(-1)[TRAINING_SLICE])
-
-predictions = model.predict(data[TEST_SLICE])
-
-print('ACUTAL', data[-1:], sep="\n")
-pred = pandas.DataFrame(predictions)
-pred.columns = data.columns
-print("PREDICTIONS",pred, sep = "\n")
+manager.sellAll(lastDay)
+manager.report()
+manager.plotFundHistory()

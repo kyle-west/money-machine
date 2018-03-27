@@ -59,7 +59,14 @@ class DataWrangler:
 			splitTargets = np.split(self.targets[i], [int(trainSize * len(self.targets[i]))])
 			trainTargetList.append(splitTargets[0])
 			testTargetList.append(splitTargets[1])
+		self.saveTestData(self.originalData.iloc[int(len(self.originalData) * trainSize):])
 		return trainData, testData, trainTargetList, testTargetList
+
+	def saveTestData(self, testDf):
+		testDf.to_csv("data/testData.csv", index=False)
+
+	def loadTestData(self):
+		return pd.read_csv("data/testData.csv")
 
 	def getWindowSize(self):
 		return self.windowSize
@@ -68,13 +75,10 @@ class DataWrangler:
 		return self.currencyList
 
 if __name__ == "__main__":
-	wrangler = DataWrangler(2, False)
-	print(wrangler.getOriginalData().head())
-	wrangler.saveOriginalData()
-
-	wrangler2 = DataWrangler(2, False)
-	print(wrangler2.getOriginalData().head())
-
+	wrangler = DataWrangler(2, True)
+	print(wrangler.getOriginalData())
+	trainData, testData, trainTargetList, testTargetList = wrangler.getFormattedDataSplit(0.7)
+	print(wrangler.loadTestData())
 
 '''
 	X_train, X_test, y_train_list, y_test_list = wrangler.getFormattedDataSplit(0.7)

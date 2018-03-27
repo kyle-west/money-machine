@@ -2,6 +2,7 @@ from dataWrangler import DataWrangler
 from sklearn.ensemble import BaggingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.externals import joblib
+import os.path
 
 class NNN:
 	def __init__(self, wrangler):
@@ -13,11 +14,15 @@ class NNN:
 		for i in range(len(self.wrangler.getCurrencyList())):
 			self.regressors.append(BaggingRegressor(MLPRegressor(solver='lbfgs', hidden_layer_sizes=(130,), momentum=0.9)))
 
-	def train(self):
+	def train(self, trainSize=1):
 		self.models = []
-		trainData, testData, trainTargetList, testTargetList = self.wrangler.getFormattedDataSplit(1)
-		for regressor, targets in zip(self.regressors, trainTargetList):
-			self.models.append(regressor.fit(trainData, targets))
+		if os.path.exists("NNN.pkl"):
+			self.loadNNN()
+		else:
+			trainData, testData, trainTargetList, testTargetList = self.wrangler.getFormattedDataSplit(trainSize)
+			for regressor, targets in zip(self.regressors, trainTargetList):
+				self.models.append(regressor.fit(trainData, targets))
+			self.saveNNN()
 
 	def furtherFit(self, dailyData):
 		self.models = []
