@@ -16,7 +16,8 @@ class BuySellStay:
     #===================================================================
     # We don't need to provide a constructor
     #===================================================================
-    def __init__(self): pass
+    def __init__(self, aggressiveness = 1.0):
+       self.aggressiveness = aggressiveness # how much to buy when we buy
     
     #===================================================================
     # Helper function to compute the magnitude and action
@@ -25,16 +26,17 @@ class BuySellStay:
         magnitude = 0
         influence = 1
         decision = 'STAY'
-        if diff < 0.0:
-            influence = -1
-        if abs(diff) > .001:
-            magnitude += sigmoid(diff)
-            if diff < 0:
-                decision = 'SELL'
-            else:
-                decision = 'BUY'
-        if abs(diff) > .01:
-            magnitude += sigmoid(diff) * .25
+        if diff < 0.0:       influence = -1
+        if abs(diff) > .001: magnitude += sigmoid(diff)
+
+        # bost if large percent change
+        if abs(diff) > .01:  magnitude += sigmoid(diff) * .25
+
+        if diff < 0:
+            decision = 'SELL'
+        else:
+            decision = 'BUY'
+            magnitude *= self.aggressiveness
 
         return (magnitude * influence), decision
 
