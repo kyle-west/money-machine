@@ -29,13 +29,15 @@ class TransactionManager:
    #====================================================================
    # Constructor, initializes parameter values
    #====================================================================
-   def __init__(self, initialInvestment = None, debug = False):
+   def __init__(self, initialInvestment = None, heartBeat = False, debug = False):
       self.totalFunds = 100000.0
       self.purchaseCap = 250.0
       self.currentShares = {}
       self.history = [self.totalFunds]
       self.debug = debug
       self.recording = True
+      self.heartBeat = heartBeat
+      if self.heartBeat: self.HBCount = 0
 
       if debug: self.report()
 
@@ -63,6 +65,10 @@ class TransactionManager:
 
       for currency in sell_list: self.sell(currency, currentValues)
       for currency in buy_list:  self.buy(currency,  currentValues)
+      
+      if self.heartBeat:
+         print("[TransactionManager] HEARTBEAT", self.HBCount)
+         self.HBCount += 1
 
    #====================================================================
    # Calculates the number of shares to buy based on allocated funds

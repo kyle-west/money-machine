@@ -3,8 +3,10 @@ import numpy as np
 import os.path
 
 class DataWrangler:
-	def __init__(self, windowSize, debug=False):
+	def __init__(self, windowSize, debug=False, save=True):
 		self.windowSize = windowSize
+		self.save = save
+		if not self.save: print("[DataWrangler] WARNING: not saving 'currentData.csv'")
 		self.currencyList = ["AUD","CAD","CHF","CZK","DKK","EUR","GBP","HKD","HUF","JPY","KRW","NOK","NZD","PLN","SEK","SGD","ZAR"]
 		self.setup(debug)
 
@@ -37,11 +39,12 @@ class DataWrangler:
 				self.targets[i][index] = targetRow[0][i]
 
 	def addDailyData(self, dailyData):
-		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData)), ignore_index=True)
+		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.originalData.columns), ignore_index=True)
 		self.saveOriginalData()
 
 	def saveOriginalData(self):
-		self.originalData.to_csv("data/currentData.csv", index=False)
+		if self.save:
+			self.originalData.to_csv("data/currentData.csv", index=False)
 
 	def getLastWindowSizedData(self):
 		return np.atleast_2d(np.ravel(self.originalData.tail(self.windowSize)))
@@ -59,7 +62,14 @@ class DataWrangler:
 			splitTargets = np.split(self.targets[i], [int(trainSize * len(self.targets[i]))])
 			trainTargetList.append(splitTargets[0])
 			testTargetList.append(splitTargets[1])
+		self.saveTestData(self.originalData.iloc[int(len(self.originalData) * trainSize):])
 		return trainData, testData, trainTargetList, testTargetList
+
+	def saveTestData(self, testDf):
+		testDf.to_csv("data/testData.csv", index=False)
+
+	def loadTestData(self):
+		return pd.read_csv("data/testData.csv")
 
 	def getWindowSize(self):
 		return self.windowSize
@@ -68,13 +78,10 @@ class DataWrangler:
 		return self.currencyList
 
 if __name__ == "__main__":
-	wrangler = DataWrangler(2, False)
-	print(wrangler.getOriginalData().head())
-	wrangler.saveOriginalData()
-
-	wrangler2 = DataWrangler(2, False)
-	print(wrangler2.getOriginalData().head())
-
+	wrangler = DataWrangler(2, True)
+	print(wrangler.getOriginalData())
+	trainData, testData, trainTargetList, testTargetList = wrangler.getFormattedDataSplit(0.7)
+	print(wrangler.loadTestData())
 
 '''
 	X_train, X_test, y_train_list, y_test_list = wrangler.getFormattedDataSplit(0.7)

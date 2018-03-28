@@ -7,44 +7,41 @@
 ########################################################################
 # load libraries and data
 ########################################################################
-from sklearn.neural_network import MLPRegressor
-import pandas
-import output
+from dataWrangler import DataWrangler
+from Format import Format
+from TransactionManager import TransactionManager
+from BuySellStay import BuySellStay
+from NNN import NNN
+import pandas as pd
 
-print("LOADING DATASET")
-data = pandas.read_csv('./data/raw_base_usd.csv', header=0)
+F = Format()
 
-# opt in which curencies we care about
-data = data[[
-   "AUD","CAD","CHF","CZK","DKK",
-   "EUR","GBP","HKD","HUF","JPY",
-   "KRW","NOK","NZD","PLN","SEK",
-   "SGD","ZAR"
-]] 
-print(data.head())
+print("SPLITTING DATA")
+wrangler = DataWrangler(windowSize=14, save=False)
+nnn = NNN(wrangler)
 
+print("TRAINING")
+nnn.train(0.9)
 
-########################################################################
-# Train on our dataset
-########################################################################
-print("BEGIN TRAINING")
+testData = wrangler.loadTestData()
+i, num_rows = 1, (testData.shape[0]-3)
+day0 = F.DataFrameRow_to_Dictionary(testData[(i-1):i])
+lastDay = F.DataFrameRow_to_Dictionary(testData[(i+num_rows+1):(i+num_rows+2)])
+manager = TransactionManager(initialInvestment=(day0, 0.40), heartBeat=True)
+bss = BuySellStay(aggressiveness = 10.0)
 
-NN = MLPRegressor(
-   hidden_layer_sizes=(130,),  activation='logistic', solver='adam', 
-   alpha=0.001, batch_size='auto', learning_rate='constant', 
-   learning_rate_init=0.01, max_iter=1000, shuffle=False,
-   random_state=None, warm_start=False, momentum=0.9
-)
+print("PREDICTING & TRADING")
 
-TEST_SIZE = 1
-TRAINING_SLICE = slice(0,-(TEST_SIZE + 1))
-TEST_SLICE = slice(-(TEST_SIZE + 1), -1)
+for i in range(i, (i+num_rows+1)):
+   row = testData[i:(i+1)]
+   prediction = F.twoLists_to_Dictionary(
+      wrangler.getCurrencyList(), 
+      nnn.smartPredict(row.values[0])
+   )
+   row = F.DataFrameRow_to_Dictionary(row)
+   actions = bss.getActions(row, prediction)
+   manager.makeTransactions(actions, row)
 
-model = NN.fit(data[TRAINING_SLICE], data.shift(-1)[TRAINING_SLICE])
-
-predictions = model.predict(data[TEST_SLICE])
-
-print('ACUTAL', data[-1:], sep="\n")
-pred = pandas.DataFrame(predictions)
-pred.columns = data.columns
-print("PREDICTIONS",pred, sep = "\n")
+manager.sellAll(lastDay)
+manager.report()
+manager.plotFundHistory()
