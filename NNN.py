@@ -14,6 +14,9 @@ class NNN:
 		for i in range(len(self.wrangler.getCurrencyList())):
 			self.regressors.append(BaggingRegressor(MLPRegressor(solver='lbfgs', hidden_layer_sizes=(130,), momentum=0.9)))
 
+	def individualTrain(self, regressor, trainData, targets):
+		return regressor.fit(trainData, targets)
+
 	def train(self, trainSize=1):
 		self.models = []
 		if os.path.exists("NNN.pkl"):
@@ -27,6 +30,7 @@ class NNN:
 	def furtherFit(self, dailyData):
 		self.models = []
 		lastWindowData = self.wrangler.getLastWindowSizedData()
+		print("\t:", lastWindowData)
 		for regressor, target in zip(self.regressors, dailyData):
 			self.models.append(regressor.fit(lastWindowData, [target]))
 		self.wrangler.addDailyData(dailyData)
@@ -49,28 +53,7 @@ class NNN:
 		self.models = joblib.load("NNN.pkl")
 
 if __name__ == "__main__":
-	debug = True
-	wrangler = DataWrangler(filePath="data/raw_base_usd.csv", windowSize=2, debug=debug)
+	wrangler = DataWrangler(14)
 	nnn = NNN(wrangler)
-	#------------#
-	#Train takes about maybe 15 minutes
-	nnn.train()
-	#------------#
-	print("nnn")
-	print(nnn.predict())
-
-	nnn.saveNNN()
-
-	nnn2 = NNN(wrangler)
-
-	nnn2.loadNNN()
-
-	if debug:
-		nnn2.furtherFit([21,22,23,24])
-	else:
-		pass
-	print("nnn2")
-	print(nnn2.predict())
-	print("------")
-	print(wrangler.getOriginalData())
+	nnn.train(0.9)
 	

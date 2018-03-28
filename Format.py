@@ -12,6 +12,12 @@ class Format:
       for col in dfWithOneRow:
          dict[col] = dfWithOneRow[0:1][col].values[0]
       return dict
+
+   def DataFrameRow_to_List(self, dfWithOneRow):
+      vals = []
+      for col in dfWithOneRow:
+         vals.append(dfWithOneRow[0:1][col].values[0])
+      return vals
    
    def twoLists_to_Dictionary(self, keyList, valueList):
       dict, i = {}, 0
