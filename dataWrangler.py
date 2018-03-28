@@ -3,8 +3,10 @@ import numpy as np
 import os.path
 
 class DataWrangler:
-	def __init__(self, windowSize, debug=False):
+	def __init__(self, windowSize, debug=False, save=True):
 		self.windowSize = windowSize
+		self.save = save
+		if not self.save: print("[DataWrangler] WARNING: not saving 'currentData.csv'")
 		self.currencyList = ["AUD","CAD","CHF","CZK","DKK","EUR","GBP","HKD","HUF","JPY","KRW","NOK","NZD","PLN","SEK","SGD","ZAR"]
 		self.setup(debug)
 
@@ -37,11 +39,12 @@ class DataWrangler:
 				self.targets[i][index] = targetRow[0][i]
 
 	def addDailyData(self, dailyData):
-		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData)), ignore_index=True)
+		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.originalData.columns), ignore_index=True)
 		self.saveOriginalData()
 
 	def saveOriginalData(self):
-		self.originalData.to_csv("data/currentData.csv", index=False)
+		if self.save:
+			self.originalData.to_csv("data/currentData.csv", index=False)
 
 	def getLastWindowSizedData(self):
 		return np.atleast_2d(np.ravel(self.originalData.tail(self.windowSize)))

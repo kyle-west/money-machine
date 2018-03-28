@@ -17,7 +17,7 @@ import pandas as pd
 F = Format()
 
 print("SPLITTING DATA")
-wrangler = DataWrangler(windowSize=14, debug=False)
+wrangler = DataWrangler(windowSize=14, save=False)
 nnn = NNN(wrangler)
 
 print("TRAINING")
@@ -27,8 +27,8 @@ testData = wrangler.loadTestData()
 i, num_rows = 1, (testData.shape[0]-3)
 day0 = F.DataFrameRow_to_Dictionary(testData[(i-1):i])
 lastDay = F.DataFrameRow_to_Dictionary(testData[(i+num_rows+1):(i+num_rows+2)])
-manager = TransactionManager(initialInvestment=(day0, 0.40))
-bss = BuySellStay(aggressiveness = 300.0)
+manager = TransactionManager(initialInvestment=(day0, 0.40), heartBeat=True)
+bss = BuySellStay(aggressiveness = 10.0)
 
 print("PREDICTING & TRADING")
 
@@ -36,8 +36,7 @@ for i in range(i, (i+num_rows+1)):
    row = testData[i:(i+1)]
    prediction = F.twoLists_to_Dictionary(
       wrangler.getCurrencyList(), 
-      # nnn.smartPredict(row.values[0])
-      row.values[0]
+      nnn.smartPredict(row.values[0])
    )
    row = F.DataFrameRow_to_Dictionary(row)
    actions = bss.getActions(row, prediction)

@@ -30,7 +30,6 @@ class NNN:
 	def furtherFit(self, dailyData):
 		self.models = []
 		lastWindowData = self.wrangler.getLastWindowSizedData()
-		print("\t:", lastWindowData)
 		for regressor, target in zip(self.regressors, dailyData):
 			self.models.append(regressor.fit(lastWindowData, [target]))
 		self.wrangler.addDailyData(dailyData)
