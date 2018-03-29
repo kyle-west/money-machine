@@ -124,13 +124,14 @@ class TransactionManager:
    #====================================================================
    # Show a plot to report the changing values of the system
    #====================================================================
-   def plotFundHistory(self, showEachTransaction=False):
-      print("GENERATING PLOT...")
+   def plotFundHistory(self, title="Fund History", showTransactionPoints=False):
+      print("GENERATING PLOT '",title,"' ...", sep="")
       plt.plot(range(0,len(self.history)), self.history)
-      if showEachTransaction:
+      if showTransactionPoints:
          plt.plot(range(0,len(self.history)), self.history, 'ro')
       plt.ylabel('$ Value in USD')
       plt.xlabel('Transaction Number')
+      plt.title(title)
       plt.show()
 
    #====================================================================
@@ -200,4 +201,4 @@ if __name__ == "__main__":
 
    manager.sellAll(lastDay)
    manager.report()
-   manager.plotFundHistory()
+   manager.plotFundHistory(title="With a 'Perfect' Learner")
