@@ -56,7 +56,7 @@ class NNN:
 		return self.predict()
 
 	#-------------
-	# Used only with specialPredict
+	# Used only with batchPredict
 	#-------------
 	def specialFit(self):
 		self.models = []
@@ -70,8 +70,8 @@ class NNN:
 	#--------------
 	# Update Every 100
 	#--------------
-	def specialPredict(self, dailyData):
-		if (self.counter == 100):
+	def batchPredict(self, dailyData, period = 100):
+		if (self.counter == period):
 			self.specialFit()
 			self.added = []
 			self.counter = 0

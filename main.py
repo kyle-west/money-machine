@@ -41,7 +41,7 @@ for i in range(i, (i+num_rows+1)):
       wrangler.getCurrencyList(), 
       #nnn.predict()
       #nnn.smartPredict(row.get_values()[0])
-      nnn.specialPredict(row.get_values()[0]) #This predict does furtherfit every 100 Heartbeats
+      nnn.batchPredict(row.get_values()[0], period = 100) #This predict does furtherfit every 100 Heartbeats
    )
    row = F.DataFrameRow_to_Dictionary(row)
    actions = bss.getActions(row, prediction)
