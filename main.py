@@ -7,23 +7,25 @@
 ########################################################################
 # load libraries and data
 ########################################################################
-from dataWrangler import DataWrangler
+from DataWrangler import DataWrangler
 from Format import Format
 from TransactionManager import TransactionManager
 from BuySellStay import BuySellStay
 from NNN import NNN
-import pandas as pd
 
 F = Format()
 
 print("SPLITTING DATA")
-wrangler = DataWrangler(windowSize=14, save=False)
-nnn = NNN(wrangler)
+#IF YOU CHANGE ANYTHING HERE, YOU MUST RETRAIN NNN
+wrangler = DataWrangler(windowSize=10, 
+      						currencyList=["AUD","CAD","CHF","CZK","DKK","EUR","GBP","HKD","HUF","JPY","KRW","NOK","NZD","PLN","SEK","SGD","ZAR"], 
+      						trainSize=0.9) #Automatically loads currentData.csv if it exists instead of raw_base_usd.csv
+nnn = NNN(wrangler, useEnsemble=True)
 
 print("TRAINING")
-nnn.train(0.9)
+nnn.train() #Automatically uses .pkl if it exists
 
-testData = wrangler.loadTestData()
+testData = wrangler.getTestData()
 i, num_rows = 1, (testData.shape[0]-3)
 day0 = F.DataFrameRow_to_Dictionary(testData[(i-1):i])
 lastDay = F.DataFrameRow_to_Dictionary(testData[(i+num_rows+1):(i+num_rows+2)])
@@ -34,9 +36,12 @@ print("PREDICTING & TRADING")
 
 for i in range(i, (i+num_rows+1)):
    row = testData[i:(i+1)]
+   #print(row.get_values())
    prediction = F.twoLists_to_Dictionary(
       wrangler.getCurrencyList(), 
-      nnn.smartPredict(row.values[0])
+      #nnn.predict()
+      #nnn.smartPredict(row.get_values()[0])
+      nnn.specialPredict(row.get_values()[0]) #This predict does furtherfit every 100 Heartbeats
    )
    row = F.DataFrameRow_to_Dictionary(row)
    actions = bss.getActions(row, prediction)

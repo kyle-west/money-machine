@@ -1,30 +1,40 @@
-from dataWrangler import DataWrangler
+from DataWrangler import DataWrangler
 from sklearn.ensemble import BaggingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.externals import joblib
 import os.path
+import pandas as pd
 
 class NNN:
-	def __init__(self, wrangler):
+	def __init__(self, wrangler, useEnsemble):
 		self.wrangler = wrangler
-		self.setup()
+		self.counter = 0
+		self.added = []
+		self.setup(useEnsemble)
 
-	def setup(self):
+	def setup(self, useEnsemble):
 		self.regressors = []
 		for i in range(len(self.wrangler.getCurrencyList())):
-			self.regressors.append(BaggingRegressor(MLPRegressor(solver='lbfgs', hidden_layer_sizes=(130,), momentum=0.9)))
+			mlp = MLPRegressor(hidden_layer_sizes=130, activation='logistic', solver='adam',
+				               alpha=.001, batch_size='auto', learning_rate='constant',
+				               learning_rate_init=.01, max_iter = 10000, shuffle=False, random_state=None,
+				               momentum=0.9)
+			if useEnsemble:
+				self.regressors.append(BaggingRegressor(mlp))
+			else:
+				self.regressors.append(mlp)
 
-	def individualTrain(self, regressor, trainData, targets):
-		return regressor.fit(trainData, targets)
-
-	def train(self, trainSize=1):
+	def train(self):
 		self.models = []
 		if os.path.exists("NNN.pkl"):
 			self.loadNNN()
 		else:
-			trainData, testData, trainTargetList, testTargetList = self.wrangler.getFormattedDataSplit(trainSize)
+			i = 0
+			trainData, trainTargetList = self.wrangler.getFormattedTrainDataAndTargets()
 			for regressor, targets in zip(self.regressors, trainTargetList):
 				self.models.append(regressor.fit(trainData, targets))
+				print("[NNN] Trained " + str(i))
+				i += 1
 			self.saveNNN()
 
 	def furtherFit(self, dailyData):
@@ -45,6 +55,31 @@ class NNN:
 		self.furtherFit(dailyData)
 		return self.predict()
 
+	#-------------
+	# Used only with specialPredict
+	#-------------
+	def specialFit(self):
+		self.models = []
+		data, targets = self.wrangler.formatData(pd.DataFrame(self.added))
+		i = 0
+		for regressor, target in zip(self.regressors, targets):
+			self.models.append(regressor.fit(data, target))
+			print("[NNN] Special Further Fitted " + str(i))
+			i += 1
+
+	#--------------
+	# Update Every 100
+	#--------------
+	def specialPredict(self, dailyData):
+		if (self.counter == 100):
+			self.specialFit()
+			self.added = []
+			self.counter = 0
+		self.counter += 1
+		self.added.append(dailyData)
+		self.wrangler.addDailyData(dailyData)
+		return self.predict()
+
 	def saveNNN(self):
 		joblib.dump(self.models, "NNN.pkl")
 
@@ -52,7 +87,5 @@ class NNN:
 		self.models = joblib.load("NNN.pkl")
 
 if __name__ == "__main__":
-	wrangler = DataWrangler(14)
-	nnn = NNN(wrangler)
-	nnn.train(0.9)
+	pass
 	

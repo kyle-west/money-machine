@@ -3,73 +3,68 @@ import numpy as np
 import os.path
 
 class DataWrangler:
-	def __init__(self, windowSize, debug=False, save=True):
+	INITIAL_DATAFILE = "data/raw_base_usd.csv"
+	DATAFILE = "data/currentData.csv"
+
+	def __init__(self, windowSize, currencyList, trainSize, debug=False):
 		self.windowSize = windowSize
-		self.save = save
-		if not self.save: print("[DataWrangler] WARNING: not saving 'currentData.csv'")
-		self.currencyList = ["AUD","CAD","CHF","CZK","DKK","EUR","GBP","HKD","HUF","JPY","KRW","NOK","NZD","PLN","SEK","SGD","ZAR"]
-		self.setup(debug)
+		self.currencyList = currencyList
+		self.dataToSave = []
+		self.setup(trainSize, debug)
 
-	def setup(self, debug):
-		if os.path.exists("data/currentData.csv"):
-			self.originalData = pd.read_csv("data/currentData.csv", header=0)
-		else:
-			self.originalData = pd.read_csv("data/raw_base_usd.csv", header=0)
-		self.originalData = self.originalData[self.currencyList]
+	def setup(self, trainSize, debug):
 		if debug:
-			self.originalData = pd.DataFrame([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]])
-		self.reformatData()
+			self.data = pd.DataFrame([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]])
+		elif os.path.exists(self.DATAFILE):
+			self.data = pd.read_csv(self.DATAFILE, header=0)
+		else:
+			self.data = pd.read_csv(self.INITIAL_DATAFILE, header=0)
+		if not debug:
+			self.data = self.data[self.currencyList]
+		splitData = np.split(self.data, [int(len(self.data) * trainSize)])
+		self.trainData = splitData[0]
+		self.testData = splitData[1]
 
-	def reformatData(self):
-		dataRowCount = len(self.originalData)
-		dataColCount = len(self.originalData.columns)
+	def getFormattedTrainDataAndTargets(self):
+		return self.formatData(self.trainData)
+
+	def formatData(self, data):
+		dataRowCount = len(data)
+		dataColCount = len(data.columns)
 		rowCount = dataRowCount - self.windowSize
 		colCount = dataColCount * self.windowSize
-		self.data = np.empty(shape=[rowCount, colCount])
-		self.targets = np.empty(shape=[dataColCount, rowCount])
-		for index, row in self.originalData.iterrows():
+		formattedData = np.empty(shape=[rowCount, colCount])
+		formattedTargets = np.empty(shape=[dataColCount, rowCount])
+		for index, row in data.iterrows():
 			if (index + self.windowSize >= dataRowCount):
 				break
 			for i in range(self.windowSize):
-				row = self.originalData.iloc[[index + i]].get_values()
+				row = data.iloc[[index + i]].get_values()
 				for j in range(dataColCount):
-					self.data[index][(i * dataColCount) + j] = row[0][j]
-			targetRow = self.originalData.iloc[[index + self.windowSize]].get_values()
+					formattedData[index][(i * dataColCount) + j] = row[0][j]
+			targetRow = data.iloc[[index + self.windowSize]].get_values()
 			for i in range(dataColCount):
-				self.targets[i][index] = targetRow[0][i]
+				formattedTargets[i][index] = targetRow[0][i]
+		return formattedData, formattedTargets
 
 	def addDailyData(self, dailyData):
-		self.originalData = self.originalData.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.originalData.columns), ignore_index=True)
-		self.saveOriginalData()
-
-	def saveOriginalData(self):
-		if self.save:
-			self.originalData.to_csv("data/currentData.csv", index=False)
+		if (len(self.dataToSave) < self.windowSize):
+			self.data = self.data.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.data.columns), ignore_index=True)
+		self.dataToSave.append(dailyData)
 
 	def getLastWindowSizedData(self):
-		return np.atleast_2d(np.ravel(self.originalData.tail(self.windowSize)))
+		if (len(self.dataToSave) < self.windowSize):
+			return np.atleast_2d(np.ravel(self.data.tail(self.windowSize)))
+		return np.atleast_2d(np.ravel(self.dataToSave[-self.windowSize:]))
 
-	def getOriginalData(self):
-		return self.originalData
+	def getData(self):
+		return self.data
 
-	def getFormattedDataSplit(self, trainSize):
-		splitData = np.split(self.data, [int(trainSize * len(self.data))])
-		trainData = splitData[0]
-		testData = splitData[1]
-		trainTargetList = []
-		testTargetList = []
-		for i in range(len(self.targets)):
-			splitTargets = np.split(self.targets[i], [int(trainSize * len(self.targets[i]))])
-			trainTargetList.append(splitTargets[0])
-			testTargetList.append(splitTargets[1])
-		self.saveTestData(self.originalData.iloc[int(len(self.originalData) * trainSize):])
-		return trainData, testData, trainTargetList, testTargetList
+	def getTrainData(self):
+		return self.trainData
 
-	def saveTestData(self, testDf):
-		testDf.to_csv("data/testData.csv", index=False)
-
-	def loadTestData(self):
-		return pd.read_csv("data/testData.csv")
+	def getTestData(self):
+		return self.testData
 
 	def getWindowSize(self):
 		return self.windowSize
@@ -77,31 +72,33 @@ class DataWrangler:
 	def getCurrencyList(self):
 		return self.currencyList
 
+	def saveData(self):
+		if (len(self.dataToSave) > self.windowSize):
+			self.data = self.data.append(pd.DataFrame(np.atleast_2d(self.dataToSave[self.windowSize:]), columns=self.data.columns), ignore_index=True)
+		self.data.to_csv(self.DATAFILE, index=False)
+
+
 if __name__ == "__main__":
-	wrangler = DataWrangler(2, True)
-	print(wrangler.getOriginalData())
-	trainData, testData, trainTargetList, testTargetList = wrangler.getFormattedDataSplit(0.7)
-	print(wrangler.loadTestData())
-
-'''
-	X_train, X_test, y_train_list, y_test_list = wrangler.getFormattedDataSplit(0.7)
-
-	print("Original Data")
-	print(wrangler.getOriginalData())
-
-	print("X_train")
-	print(X_train)
-
-	print("X_test")
-	print(X_test)
-
-	print("y_train_list")
-	for i in range(len(y_train_list)):
-		print(y_train_list[i])
-
-	print("y_test_list")
-	for i in range(len(y_test_list)):
-		print(y_test_list[i])
-
-	print("LastWindowSizedData")
-	print(wrangler.getLastWindowSizedData())'''
+	wrangler = DataWrangler2(windowSize=2, currencyList=[], trainSize=0.7, debug=True)
+	print("DATA")
+	print(wrangler.getData())
+	print("TRAIN DATA")
+	print(wrangler.getTrainData())
+	print("TEST DATA")
+	print(wrangler.getTestData())
+	print("FORMATTED DATA")
+	trainData, trainTargets = wrangler.getFormattedTrainDataAndTargets()
+	print("Train")
+	print(trainData)
+	print("Targets")
+	print(trainTargets)
+	print("Last Window Sized Data")
+	print(wrangler.getLastWindowSizedData())
+	print("Adding 3 daily data rows")
+	wrangler.addDailyData([21,22,23,24])
+	wrangler.addDailyData([25,26,27,28])
+	wrangler.addDailyData([29,30,31,32])
+	print("New Last Window Sized Data")
+	print(wrangler.getLastWindowSizedData())
+	print("Saving data")
+	wrangler.saveData()
