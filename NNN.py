@@ -1,4 +1,4 @@
-from DataWrangler import DataWrangler
+from dataWrangler import DataWrangler
 from sklearn.ensemble import BaggingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.externals import joblib
@@ -78,6 +78,20 @@ class NNN:
 		self.counter += 1
 		self.added.append(dailyData)
 		self.wrangler.addDailyData(dailyData)
+		return self.predict()
+
+	def trainWithoutPkl(self):
+		i = 0
+		trainData, trainTargetList = self.wrangler.getFormattedTrainDataAndTargets()
+		for regressor, targets in zip(self.regressors, trainTargetList):
+			self.models.append(regressor.fit(trainData, targets))
+			print("[NNN] Trained " + str(i))
+			i += 1
+
+	def trainAllEverytimePredict(self, dailyData):
+		self.wrangler.addDailyDataToTrainData(dailyData)
+		self.wrangler.addDailyData(dailyData)
+		self.trainWithoutPkl()
 		return self.predict()
 
 	def saveNNN(self):
