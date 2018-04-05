@@ -113,18 +113,23 @@ class TransactionManager:
    #====================================================================
    # Print a simple report to the screen of what we own
    #====================================================================
-   def report(self):
+   def generateReportText(self, showShareHolds=True):
       money = lambda x: "$ {: >10}".format("{:.2f}".format(x))
-      print("CURRENT FUNDS:", money(self.totalFunds), sep = "\t")
-      print("TOTAL PROFIT:", money(self.totalFunds - self.history[0]), sep = "\t")
-      print("MAX FUNDS:", money(max(self.history)), sep = "\t")
-      print("MIN FUNDS:", money(min(self.history)), sep = "\t")
-      print("CURRENT SHARES HELD:", self.currentShares, "", sep = "\n")
+      report =  "CURRENT FUNDS:\t" + money(self.totalFunds) + "\n"
+      report += "TOTAL PROFIT:\t" + money(self.totalFunds - self.history[0]) + "\n"
+      report += "MAX FUNDS:\t" + money(max(self.history)) + "\n"
+      report += "MIN FUNDS:\t" + money(min(self.history)) + "\n"
+      if showShareHolds:
+         report +="CURRENT SHARES HELD:\n" + str(self.currentShares) + "\n\n"
+      return report
+
+   def report(self):
+      print(self.generateReportText())
 
    #====================================================================
    # Show a plot to report the changing values of the system
    #====================================================================
-   def plotFundHistory(self, title="Fund History", showTransactionPoints=False):
+   def plotFundHistory(self, title="Fund History", showTransactionPoints=False, specs=None, showStats=False):
       print("GENERATING PLOT '",title,"' ...", sep="")
       plt.plot(range(0,len(self.history)), self.history)
       if showTransactionPoints:
@@ -132,6 +137,14 @@ class TransactionManager:
       plt.ylabel('$ Value in USD')
       plt.xlabel('Transaction Number')
       plt.title(title)
+      if specs: 
+         plt.text(0, -20000, str(specs), size=5)
+      if showStats:
+         x = len(self.history)
+         x = x + x * 0.07
+         y = max(self.history)
+         y = y - y * 0.05
+         plt.text(x, y, self.generateReportText(), size=5)
       plt.show()
 
    #====================================================================
@@ -170,10 +183,7 @@ if __name__ == "__main__":
    # read in file data opt in which curencies we care about
    data = pandas.read_csv('data/raw_base_usd.csv', header=0)
    data = data[[
-      "AUD","CAD","CHF","CZK","DKK",
-      "EUR","GBP","HKD","HUF","JPY",
-      "KRW","NOK","NZD","PLN","SEK",
-      "SGD","ZAR"
+      "EUR","GBP","JPY"
    ]]
    print(data.head())
 
