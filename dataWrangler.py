@@ -52,6 +52,9 @@ class DataWrangler:
 			self.data = self.data.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.data.columns), ignore_index=True)
 		self.dataToSave.append(dailyData)
 
+	def addDailyDataToTrainData(self, dailyData):
+		self.trainData = self.trainData.append(pd.DataFrame(np.atleast_2d(dailyData), columns=self.trainData.columns), ignore_index=True)
+
 	def getLastWindowSizedData(self):
 		if (len(self.dataToSave) < self.windowSize):
 			return np.atleast_2d(np.ravel(self.data.tail(self.windowSize)))
